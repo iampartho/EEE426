@@ -1,6 +1,6 @@
 {
-    "train_csv": "/content/Chexpert/config/train.csv",
-    "dev_csv": "/content/Chexpert/config/dev.csv",
+    "train_csv": "/content/EEE426/config/train.csv",
+    "dev_csv": "/content/EEE426/config/dev.csv",
     "backbone": "densenet121",
     "width": 256,
     "height": 256,

@@ -11,6 +11,7 @@ def Common(image):
 
 
 def Aug(image):
+    # the image is PIL image
     img_aug = tfs.Compose([
         tfs.RandomAffine(degrees=(-15, 15), translate=(0.05, 0.05),
                          scale=(0.95, 1.05), fillcolor=128)
