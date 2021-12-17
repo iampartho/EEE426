@@ -135,9 +135,10 @@ class Classifier(nn.Module):
         logits = list()
         # [(N, H, W), (N, H, W),...]
         logit_maps = list()
+        if self.cfg.attention_map != "None":
+            feat_map = self.attention_map(feat_map)
         for index, num_class in enumerate(self.cfg.num_classes):
-            if self.cfg.attention_map != "None":
-                feat_map = self.attention_map(feat_map)
+            
 
             classifier = getattr(self, "fc_" + str(index))
             # (N, 1, H, W)
