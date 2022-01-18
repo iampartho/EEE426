@@ -1,4 +1,7 @@
+import torch
 from torch import nn
+
+
 
 import torch.nn.functional as F
 from model.backbone.vgg import (vgg19, vgg19_bn)
@@ -36,6 +39,7 @@ class Classifier(nn.Module):
             self.expand = 2
         elif cfg.global_pool == 'AVG_MAX_LSE':
             self.expand = 3
+        self.adapool = nn.AdaptiveAvgPool2d((8, 8)) # for mask only
         self._init_classifier()
         self._init_bn()
         self._init_attention_map()
@@ -128,7 +132,13 @@ class Classifier(nn.Module):
     def cuda(self, device=None):
         return self._apply(lambda t: t.cuda(device))
 
-    def forward(self, x):
+    def forward(self, x, mask):
+        # process masks
+        mask = self.adapool(mask)
+        mask = mask.ge(0.5).float() #0,1 binarization
+        
+
+
         # (N, C, H, W)
         feat_map = self.backbone(x)
         # [(N, 1), (N,1),...]
@@ -137,6 +147,7 @@ class Classifier(nn.Module):
         logit_maps = list()
         if self.cfg.attention_map != "None":
             feat_map = self.attention_map(feat_map)
+        feat_map = torch.mul(feat_map, mask) # multiplying mask with feat_map
         for index, num_class in enumerate(self.cfg.num_classes):
             
 

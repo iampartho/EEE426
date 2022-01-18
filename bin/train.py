@@ -24,6 +24,7 @@ torch.cuda.manual_seed_all(0)
 
 from data.dataset import ImageDataset  # noqa
 from model.classifier import Classifier  # noqa
+from model.UNet import UNet
 from utils.misc import lr_schedule  # noqa
 from model.utils import get_optimizer  # noqa
 
@@ -91,7 +92,9 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         image, target = next(dataiter)
         image = image.to(device)
         target = target.to(device)
-        output, logit_map = model(image)
+
+        var_mask = model_unet(image)
+        output, logit_map = model(image, var_mask)
 
         # different number of tasks
         loss = 0
@@ -265,7 +268,9 @@ def test_epoch(summary, cfg, args, model, dataloader):
         image, target = next(dataiter)
         image = image.to(device)
         target = target.to(device)
-        output, logit_map = model(image)
+
+        var_mask = model_unet(image)
+        output, logit_map = model(image, var_mask)
         # different number of tasks
         for t in range(len(cfg.num_classes)):
 
@@ -314,7 +319,15 @@ def run(args):
             '#available gpu : {} < --device_ids : {}'
             .format(num_devices, len(device_ids)))
     device = torch.device('cuda:{}'.format(device_ids[0]))
+    # model UNet
+    model_unet = UNet(n_channels=3, n_classes=1).cuda()
+    CKPT_PATH = cfg.checkpoint_unet
+    checkpoint = torch.load(CKPT_PATH)
+    model_unet.load_state_dict(checkpoint)
+    print("=> loaded well-trained unet model checkpoint: "+CKPT_PATH)
+    model_unet.eval()
 
+    #classifier model
     model = Classifier(cfg)
     if args.verbose is True:
         from torchsummary import summary
