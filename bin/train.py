@@ -37,7 +37,7 @@ parser.add_argument('--num_workers', default=8, type=int, help="Number of "
                     "workers for each data loader")
 parser.add_argument('--device_ids', default='0', type=str,
                     help="GPU indices ""comma separated, e.g. '0,1' ")
-parser.add_argument('--pre_train', default=None, type=str, help="If get"
+parser.add_argument('--pre_train', default="/content/EEE426/config/pre_train.pth", type=str, help="If get"
                     "parameters from pretrained model")
 parser.add_argument('--resume', default=0, type=int, help="If resume from "
                     "previous run")
@@ -73,7 +73,7 @@ def get_loss(output, target, index, device, cfg):
     return (loss, acc)
 
 
-def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
+def train_epoch(summary, summary_dev, cfg, args, model,model_unet, dataloader,
                 dataloader_dev, optimizer, summary_writer, best_dict,
                 dev_header):
     torch.set_grad_enabled(True)
@@ -92,8 +92,8 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         image, target = next(dataiter)
         image = image.to(device)
         target = target.to(device)
-
-        var_mask = model_unet(image)
+        with torch.no_grad():
+            var_mask = model_unet(image)
         output, logit_map = model(image, var_mask)
 
         # different number of tasks
@@ -144,7 +144,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         if summary['step'] % cfg.test_every == 0:
             time_now = time.time()
             summary_dev, predlist, true_list = test_epoch(
-                summary_dev, cfg, args, model, dataloader_dev)
+                summary_dev, cfg, args, model,model_unet, dataloader_dev)
             time_spent = time.time() - time_now
 
             auclist = []
@@ -250,7 +250,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
     return summary, best_dict
 
 
-def test_epoch(summary, cfg, args, model, dataloader):
+def test_epoch(summary, cfg, args, model,model_unet, dataloader):
     torch.set_grad_enabled(False)
     model.eval()
     device_ids = list(map(int, args.device_ids.split(',')))
@@ -268,8 +268,8 @@ def test_epoch(summary, cfg, args, model, dataloader):
         image, target = next(dataiter)
         image = image.to(device)
         target = target.to(device)
-
-        var_mask = model_unet(image)
+        with torch.no_grad():
+            var_mask = model_unet(image)
         output, logit_map = model(image, var_mask)
         # different number of tasks
         for t in range(len(cfg.num_classes)):
@@ -340,7 +340,7 @@ def run(args):
     if args.pre_train is not None:
         if os.path.exists(args.pre_train):
             ckpt = torch.load(args.pre_train, map_location=device)
-            model.module.load_state_dict(ckpt)
+            model.module.load_state_dict(ckpt, strict=False)
     optimizer = get_optimizer(model.parameters(), cfg)
 
     # src_folder = os.path.dirname(os.path.abspath(__file__)) + '/../'
@@ -395,13 +395,13 @@ def run(args):
             param_group['lr'] = lr
 
         summary_train, best_dict = train_epoch(
-            summary_train, summary_dev, cfg, args, model,
+            summary_train, summary_dev, cfg, args, model,model_unet,
             dataloader_train, dataloader_dev, optimizer,
             summary_writer, best_dict, dev_header)
 
         time_now = time.time()
         summary_dev, predlist, true_list = test_epoch(
-            summary_dev, cfg, args, model, dataloader_dev)
+            summary_dev, cfg, args, model,model_unet, dataloader_dev)
         time_spent = time.time() - time_now
 
         auclist = []
