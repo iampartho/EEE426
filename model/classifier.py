@@ -60,7 +60,7 @@ class Classifier(nn.Module):
             elif BACKBONES_TYPES[self.cfg.backbone] == 'densenet':
                 setattr(
                     self,
-                    "fc_" +
+                    "m_fc_" +
                     str(index),
                     nn.Conv2d(
                         self.backbone.num_features *
@@ -86,7 +86,7 @@ class Classifier(nn.Module):
                     'Unknown backbone type : {}'.format(self.cfg.backbone)
                 )
 
-            classifier = getattr(self, "fc_" + str(index))
+            classifier = getattr(self, "m_fc_" + str(index))
             if isinstance(classifier, nn.Conv2d):
                 classifier.weight.data.normal_(0, 0.01)
                 classifier.bias.data.zero_()
@@ -99,7 +99,7 @@ class Classifier(nn.Module):
             elif BACKBONES_TYPES[self.cfg.backbone] == 'densenet':
                 setattr(
                     self,
-                    "bn_" +
+                    "m_bn_" +
                     str(index),
                     nn.BatchNorm2d(
                         self.backbone.num_features *
@@ -151,7 +151,7 @@ class Classifier(nn.Module):
         for index, num_class in enumerate(self.cfg.num_classes):
             
 
-            classifier = getattr(self, "fc_" + str(index))
+            classifier = getattr(self, "m_fc_" + str(index))
             # (N, 1, H, W)
             logit_map = None
             if not (self.cfg.global_pool == 'AVG_MAX' or
@@ -162,7 +162,7 @@ class Classifier(nn.Module):
             feat = self.global_pool(feat_map, logit_map)
 
             if self.cfg.fc_bn:
-                bn = getattr(self, "bn_" + str(index))
+                bn = getattr(self, "m_bn_" + str(index))
                 feat = bn(feat)
             feat = F.dropout(feat, p=self.cfg.fc_drop, training=self.training)
             # (N, num_class, 1, 1)

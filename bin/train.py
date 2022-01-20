@@ -37,9 +37,9 @@ parser.add_argument('--num_workers', default=8, type=int, help="Number of "
                     "workers for each data loader")
 parser.add_argument('--device_ids', default='0', type=str,
                     help="GPU indices ""comma separated, e.g. '0,1' ")
-parser.add_argument('--pre_train', default="/content/EEE426/config/pre_train.pth", type=str, help="If get"
+parser.add_argument('--pre_train', default="", type=str, help="If get"
                     "parameters from pretrained model")
-parser.add_argument('--resume', default=0, type=int, help="If resume from "
+parser.add_argument('--resume', default=0, help="If resume from "
                     "previous run")
 parser.add_argument('--logtofile', default=False, type=bool, help="Save log "
                     "in save_path/log.txt if set True")
