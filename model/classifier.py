@@ -147,7 +147,7 @@ class Classifier(nn.Module):
         logit_maps = list()
         if self.cfg.attention_map != "None":
             feat_map = self.attention_map(feat_map)
-        feat_map = torch.mul(feat_map, mask) # multiplying mask with feat_map
+        #feat_map = torch.mul(feat_map, mask) # multiplying mask with feat_map
         for index, num_class in enumerate(self.cfg.num_classes):
             
 
@@ -158,6 +158,7 @@ class Classifier(nn.Module):
                     self.cfg.global_pool == 'AVG_MAX_LSE'):
                 logit_map = classifier(feat_map)
                 logit_maps.append(logit_map.squeeze())
+            logit_map = torch.mul(logit_map, mask)
             # (N, C, 1, 1)
             feat = self.global_pool(feat_map, logit_map)
 
