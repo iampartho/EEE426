@@ -379,7 +379,7 @@ def run(args):
         "best_idx": 1}
 
     if args.resume:
-        ckpt_path = os.path.join(args.save_path, 'train.ckpt')
+        ckpt_path = "/content/EEE426/best10.893.ckpt"
         ckpt = torch.load(ckpt_path, map_location=device)
         model.module.load_state_dict(ckpt['state_dict'])
         summary_train = {'epoch': ckpt['epoch'], 'step': ckpt['step']}
